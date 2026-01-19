@@ -17,18 +17,30 @@ class CoinDeskApi {
     try {
       final response = await _dio.get(
         'https://data-api.coindesk.com/index/cc/v1/latest/tick',
-        queryParameters: {
-          'market': 'ccix',
-          'instruments': 'BTC-USD',
-        },
-        options: Options(
-          headers: {
-            'x-api-key': apiKey,
-          },
-        ),
+        queryParameters: {'market': 'ccix', 'instruments': 'BTC-USD'},
+        options: Options(headers: {'x-api-key': apiKey}),
       );
 
       return _parseNewResponse(response.data);
+    } catch (e) {
+      print('Ошибка API: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, double>> getPricesForCryptos(
+    String apiKey,
+    List<String> cryptoCodes,
+  ) async {
+    try {
+      final instruments = cryptoCodes.map((code) => '$code-USD').join(',');
+      final response = await _dio.get(
+        'https://data-api.coindesk.com/index/cc/v1/latest/tick',
+        queryParameters: {'market': 'ccix', 'instruments': instruments},
+        options: Options(headers: {'x-api-key': apiKey}),
+      );
+
+      return _parsePricesResponse(response.data, cryptoCodes);
     } catch (e) {
       print('Ошибка API: $e');
       rethrow;
@@ -43,5 +55,24 @@ class CoinDeskApi {
     return CryptoResponse(
       bpi: Bpi(usd: Usd(rate: price)),
     );
+  }
+
+  Map<String, double> _parsePricesResponse(
+    dynamic data,
+    List<String> cryptoCodes,
+  ) {
+    final dataMap = data['Data'] as Map<String, dynamic>;
+    final prices = <String, double>{};
+
+    for (final code in cryptoCodes) {
+      final key = '$code-USD';
+      if (dataMap.containsKey(key)) {
+        final cryptoData = dataMap[key] as Map<String, dynamic>;
+        final price = (cryptoData['VALUE'] as num).toDouble();
+        prices[code] = price;
+      }
+    }
+
+    return prices;
   }
 }

@@ -22,4 +22,10 @@ class CurrencyRepositoryImpl implements CurrencyRepository {
     final key = dotenv.env['COINDESK_API_KEY'] ?? '';
     return _coinDeskApi.getPrice(key);
   }
+
+  @override
+  Future<Map<String, double>> getCryptoPrices(List<String> cryptoCodes) {
+    final key = dotenv.env['COINDESK_API_KEY'] ?? '';
+    return _coinDeskApi.getPricesForCryptos(key, cryptoCodes);
+  }
 }
