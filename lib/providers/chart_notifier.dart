@@ -1,98 +1,38 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'crypto_stream_provider.dart';
 import 'selected_cryptos_provider.dart';
-import 'repository_provider.dart';
-import 'dart:async';
 
 part 'chart_notifier.g.dart';
 
-@riverpod
-class BitcoinHistory extends _$BitcoinHistory {
-  Timer? _timer;
+class CryptoState {
+  const CryptoState({required this.price, required this.history});
 
-  @override
-  List<double> build() {
-    final selectedCrypto = ref.watch(selectedCryptoProvider);
-    final repository = ref.watch(currencyRepositoryProvider);
-
-    state = [];
-
-    _timer?.cancel();
-
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      try {
-        final prices = await repository.getCryptoPrices([selectedCrypto]);
-        if (prices.containsKey(selectedCrypto)) {
-          _addPrice(prices[selectedCrypto]!);
-        }
-      } catch (e) {
-        print('Ошибка при загрузке цены: $e');
-      }
-    });
-
-    _loadInitialPrice(repository, selectedCrypto);
-
-    ref.onDispose(() {
-      _timer?.cancel();
-    });
-
-    return [];
-  }
-
-  void _addPrice(double price) {
-    final newList = [...state, price];
-    if (newList.length > 20) {
-      state = newList.sublist(newList.length - 20);
-    } else {
-      state = newList;
-    }
-  }
-
-  Future<void> _loadInitialPrice(dynamic repository, String crypto) async {
-    try {
-      final prices = await repository.getCryptoPrices([crypto]);
-      if (prices.containsKey(crypto)) {
-        _addPrice(prices[crypto]!);
-      }
-    } catch (e) {
-      print('Ошибка при загрузке цены: $e');
-    }
-  }
+  final double price;
+  final List<double> history;
 }
 
 @riverpod
-class CurrentCryptoPrice extends _$CurrentCryptoPrice {
-  Timer? _timer;
-
+class CryptoData extends _$CryptoData {
   @override
-  Future<double> build() async {
-    final selectedCrypto = ref.watch(selectedCryptoProvider);
-    final repository = ref.watch(currencyRepositoryProvider);
-
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      try {
-        final prices = await repository.getCryptoPrices([selectedCrypto]);
-        if (prices.containsKey(selectedCrypto)) {
-          state = AsyncValue.data(prices[selectedCrypto]!);
-        }
-      } catch (e) {
-        print('Ошибка при загрузке цены: $e');
+  CryptoState build() {
+    ref.watch(selectedCryptoProvider);
+    ref.listen(cryptoPriceStreamProvider, (previous, next) {
+      final value = next.value;
+      if (value != null && value > 0) {
+        _update(value);
       }
     });
 
-    ref.onDispose(() {
-      _timer?.cancel();
-    });
+    return CryptoState(price: 0.0, history: []);
+  }
 
-    try {
-      final prices = await repository.getCryptoPrices([selectedCrypto]);
-      if (prices.containsKey(selectedCrypto)) {
-        return prices[selectedCrypto]!;
-      }
-      return 0.0;
-    } catch (e) {
-      print('Ошибка при загрузке цены: $e');
-      rethrow;
-    }
+  void _update(double newPrice) {
+    final newHistory = [...state.history, newPrice];
+    state = CryptoState(
+      price: newPrice,
+      history: newHistory.length > 20
+          ? newHistory.sublist(newHistory.length - 20)
+          : newHistory,
+    );
   }
 }

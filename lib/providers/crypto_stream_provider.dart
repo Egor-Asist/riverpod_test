@@ -1,20 +1,22 @@
 import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'selected_cryptos_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'repository_provider.dart';
 
 part 'crypto_stream_provider.g.dart';
 
 @riverpod
-Stream<double> bitcoinPriceStream(BitcoinPriceStreamRef ref) async* {
+Stream<double> cryptoPriceStream(Ref ref) async* {
   final repository = ref.watch(currencyRepositoryProvider);
+  final selectedCrypto = ref.watch(selectedCryptoProvider);
 
-  while (true) {
+  yield* Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
     try {
-      final response = await repository.getBitcoinPrice();
-      yield response.bpi.usd.rate;
+      final prices = await repository.getCryptoPrices([selectedCrypto]);
+      return prices[selectedCrypto] ?? 0.0;
     } catch (e) {
-      print("Ошибка: $e");
+      return 0.0;
     }
-    await Future.delayed(const Duration(seconds: 10));
-  }
+  });
 }

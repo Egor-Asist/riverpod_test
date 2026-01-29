@@ -12,3 +12,4 @@ class FiatResponse with _$FiatResponse {
 
   factory FiatResponse.fromJson(Map<String, dynamic> json) => _$FiatResponseFromJson(json);
 }
+

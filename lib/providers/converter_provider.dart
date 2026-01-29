@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../core/currency_enum.dart';
 
 part 'converter_provider.g.dart';
 
@@ -15,9 +16,9 @@ class Amount extends _$Amount {
 @riverpod
 class BaseCurrency extends _$BaseCurrency {
   @override
-  String build() => 'USD';
+  CurrencyCode build() => CurrencyCode.usd;
 
-  void set(String code) {
+  void set(CurrencyCode code) {
     state = code;
   }
 }

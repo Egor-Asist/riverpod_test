@@ -1,4 +1,4 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../core/config/app_config.dart';
 import 'currency_repository.dart';
 import '../../data/sources/coin_desk_api.dart';
 import '../../data/sources/exchange_api.dart';
@@ -6,26 +6,31 @@ import '../../data/models/fiat_model.dart';
 import '../../data/models/crypto_model.dart';
 
 class CurrencyRepositoryImpl implements CurrencyRepository {
+  const CurrencyRepositoryImpl({
+    required AppConfig appConfig,
+    required ExchangeApi exchangeApi,
+    required CoinDeskApi coinDeskApi,
+  }) : _appConfig = appConfig,
+       _coinDeskApi = coinDeskApi,
+       _exchangeApi = exchangeApi;
+
+  final AppConfig _appConfig;
   final ExchangeApi _exchangeApi;
   final CoinDeskApi _coinDeskApi;
 
-  CurrencyRepositoryImpl(this._exchangeApi, this._coinDeskApi);
-
   @override
   Future<FiatResponse> getFiatRates(String baseCurrency) {
-    final key = dotenv.env['EXCHANGE_RATE_API_KEY'] ?? '';
-    return _exchangeApi.getLatestRates(key, baseCurrency);
-  }
-
-  @override
-  Future<CryptoResponse> getBitcoinPrice() {
-    final key = dotenv.env['COINDESK_API_KEY'] ?? '';
-    return _coinDeskApi.getPrice(key);
+    return _exchangeApi.getLatestRates(
+      _appConfig.exchangeRateApiKey,
+      baseCurrency,
+    );
   }
 
   @override
   Future<Map<String, double>> getCryptoPrices(List<String> cryptoCodes) {
-    final key = dotenv.env['COINDESK_API_KEY'] ?? '';
-    return _coinDeskApi.getPricesForCryptos(key, cryptoCodes);
+    return _coinDeskApi.getPricesForCryptos(
+      _appConfig.coinDeskApiKey,
+      cryptoCodes,
+    );
   }
 }

@@ -26,6 +26,8 @@ class SelectedCrypto extends _$SelectedCrypto {
     'LINK': 0xFF2A5ADA,
   };
 
+
+
   @override
   String build() {
     return 'BTC';

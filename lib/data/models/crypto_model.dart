@@ -30,3 +30,4 @@ class Usd with _$Usd {
 
   factory Usd.fromJson(Map<String, dynamic> json) => _$UsdFromJson(json);
 }
+
